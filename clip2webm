@@ -29,12 +29,10 @@ ffmpeg_cmd () {
     [ -n "$STOP" ] && FFMPEG_STARTSTOP="$FFMPEG_STARTSTOP -to $STOPs"
 
     #set the scale params
-    if [ -n "$RESOLUTION" ]; then
-        case "$RESOLUTION" in
-            1) FFMPEG_RESOLUTION="${FFMPEG_RESOLUTION}  -vf scale=-1:720";;
-            2) FFMPEG_RESOLUTION="${FFMPEG_RESOLUTION} -vf scale=-1:1080";;
-        esac
-    fi
+    case "$RESOLUTION" in
+        1) FFMPEG_RESOLUTION="${FFMPEG_RESOLUTION}  -vf scale=-1:720";;
+        2) FFMPEG_RESOLUTION="${FFMPEG_RESOLUTION} -vf scale=-1:1080";;
+    esac
     #Change to the directory of the video file
     cd "$(dirname $FILE)"
 
@@ -52,9 +50,14 @@ main () {
     local RESOLUTION=0
     local STOP=""
     local CRF="30"
+    if [ -z "$@" ] ; then
+        c2whelp
+        exit 0
+    fi
+
     while getopts :hHFs:p:mo:c: opt ; do
         case $opt in
-             h) c2whelp; exit 0;;
+             h|"") c2whelp; exit 0;;
              s) SEEK=$OPTARG;;
              p) STOP=$OPTARG;;
              c) CRF=$OPTARG;;
