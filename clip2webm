@@ -1,0 +1,81 @@
+#!/usr/bin/env bash
+set -eEu
+# simple error handler
+err () {
+    echo -e "Error: $*" >> /dev/stderr
+    exit 1
+}
+
+#setup the help function to be called later
+c2whelp () {
+    echo -e "Fizzbuzz's crappy video to 2-pass vp9 webm converter \n\n"
+    echo "Usage:        clip2webm <-F|-H> -o output.webm -- /path/to/file"
+    echo -e "\nOptions:"
+    echo "-c                Set the CRF rate (0-60), lower is higher quality at the cost of larger filesizes. Defaults to 30, the reccomended for 1080p."
+    echo "-o, -output:      Specify a name for a file. If not added, it will default to the selected input file's name."
+    echo "-s, -start:       Specifies the starting point, in seconds. Optional."
+    echo "-p, -stop:        Specifies a stopping point, in seconds. Optional."
+    echo "-F:               Scale to 1080p. Optional."
+    echo "-H:               Scale to 720p. Optional."
+}
+
+
+ffmpeg_cmd () {
+    local FFMPEG_RESOLUTION=""
+    local FFMPEG_STARTSTOP=""
+
+    # set the -ss and -to params
+    [ -n "$SEEK" ] && FFMPEG_STARTSTOP="-ss $SEEKs"
+    [ -n "$STOP" ] && FFMPEG_STARTSTOP="$FFMPEG_STARTSTOP -to $STOPs"
+
+    #set the scale params
+    if [ -n "$RESOLUTION" ]; then
+        case "$RESOLUTION" in
+            1) FFMPEG_RESOLUTION="${FFMPEG_RESOLUTION}  -vf scale=-1:720";;
+            2) FFMPEG_RESOLUTION="${FFMPEG_RESOLUTION} -vf scale=-1:1080";;
+        esac
+    fi
+    #Change to the directory of the video file
+    cd "$(dirname $FILE)"
+
+    echo "Working in $PWD."
+
+    #The black magic
+    ffmpeg -hide_banner -loglevel error $FFMPEG_STARTSTOP -i "$(basename $FILE)" $FFMPEG_RESOLUTION -c:v libvpx-vp9 -b:v 0 -crf $CRF -pass 1 -an -f null /dev/null
+    ffmpeg -hide_banner -loglevel error $FFMPEG_STARTSTOP -i "$(basename $FILE)" $FFMPEG_RESOLUTION -c:v libvpx-vp9 -b:v 0 -crf $CRF -pass 2 -row-mt 1 -quality good -speed 2 -auto-alt-ref 1 -lag-in-frames 25 -cpu-used 4 -aq-mode 0 -tile-columns 4 -tile-rows 0 -enable-tpl 1 -c:a libopus -b:a 64K  -f webm -y "$FILE_OUT"
+    echo -e "\n$FILE_OUT is done, located in $PWD.\nRemoving 'ffmpeg2pass-0.log'."
+    rm 'ffmpeg2pass-0.log'
+}
+
+main () {
+    local SEEK=""
+    local RESOLUTION=0
+    local STOP=""
+    local CRF="30"
+    while getopts :hHFs:p:mo:c: opt ; do
+        case $opt in
+             h) c2whelp; exit 0;;
+             s) SEEK=$OPTARG;;
+             p) STOP=$OPTARG;;
+             c) CRF=$OPTARG;;
+             o) FILE_OUT=$OPTARG;;
+             F) RESOLUTION=2;;
+             H) RESOLUTION=1;;
+             ?) err "$1 is not a valid arg"
+        esac
+
+    done
+
+    shift "$(($OPTIND-1))"
+    #Parse Filename, to get PWD and auto append if -o is not set.
+
+    local FILE="$1"
+    local FILE_OUT=""
+    if [ -z "$FILE_OUT" ] ; then
+        FILE_OUT=$( basename "$FILE" | sed 's/\..*$/\.webm/')
+    fi
+
+    ffmpeg_cmd "FILE" "FILE_OUT" "SEEK" "STOP" "CRF" "RESOLUTION"
+}
+
+main "$@"
