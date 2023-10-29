@@ -57,7 +57,7 @@ main () {
 
     while getopts :hHFs:p:mo:c: opt ; do
         case $opt in
-             h|"") c2whelp; exit 0;;
+             h) c2whelp; exit 0;;
              s) SEEK=$OPTARG;;
              p) STOP=$OPTARG;;
              c) CRF=$OPTARG;;
