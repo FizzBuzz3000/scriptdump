@@ -1,0 +1,56 @@
+#!/usr/bin/env bash
+set -eEu
+
+# simple error handler
+err () {
+    echo -e "Error: $*" >> /dev/stderr
+    exit 1
+}
+
+c2ghelp(){
+	echo "Fizzbuzz3000's clip to GIF converter."
+	echo "Usage: clip2gif -s 20.76s -t 38s -S -b 3 -o output.gif /path/to/video"
+	echo "Options:"
+	echo "-h:						Print this help message. Also invoked if you just call the script with no arguments."
+	echo "-b <1-3> :				sets bayer dithering, from 1-3. Default 3. Has a higher filesize"
+	echo "-D:						Disables dithering, and overrides any other dithering setting. Useful for saving on file size."
+	echo "-s <Numerical String>		Sets the starting point for the input file. Defaults to seconds if no suffix is added. Format examples: 10s, 1m40s, 20.775, 65.23s, 1h10m3s"
+	echo "-t <Numerical String>		Sets the stop point for the input file. Uses the same format as -s."
+	echo "-o /file/path/output.gif		specifies the file name and optionally the file path if filled out"
+}
+
+ffmpeg_cmd () {
+	#Create and switch to /tmp/clip2gif to output PNGs there
+	mkdir /tmp/clip2gif
+	cd /tmp/clip2gif
+
+
+}
+
+
+main() {
+	local SEEK
+	local STOP
+	local DITHER
+	local FILE
+	local FILE_OUT
+	#parse all flags, then shift OPTIND to just leave $1 to be the input file
+	while getopts :hbsD:t:ST opts ; do
+		case $opt in
+			h)	c2ghelp ; exit 0 ;;
+			b)	DITHER="$OPTARG";;
+			D)	DITHER="0";;
+			s)	SEEK="$OPTARG";;
+			t)	STOP="$OPTARG";;
+			o)	FILE_OUT="$OPTARG";;
+			?)	err "Unknown flag. Type clip2gif -h for the available flags."
+		esac
+	shift $(($OPTIND-1))
+	FILE="$1"
+
+	if [[ -z "$FILE_OUT" ]] ; then
+		FILE_OUT="$((basename $1 | sed 's/\..*$/\.gif/'))"
+	fi
+
+	ffmpeg_cmd "FILE" "FILE_OUT" "SEEK" "STOP" "DITHER"
+}
