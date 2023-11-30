@@ -25,8 +25,8 @@ ffmpeg_cmd () {
     local FFMPEG_STARTSTOP=""
 
     # set the -ss and -to params
-    [ -n "$SEEK" ] && FFMPEG_STARTSTOP="-ss $SEEKs"
-    [ -n "$STOP" ] && FFMPEG_STARTSTOP="$FFMPEG_STARTSTOP -to $STOPs"
+    [ -n "$SEEK" ] && FFMPEG_STARTSTOP="-ss $SEEK"
+    [ -n "$STOP" ] && FFMPEG_STARTSTOP="$FFMPEG_STARTSTOP -to $STOP"
 
     #set the scale params
     case "$RESOLUTION" in
@@ -35,7 +35,7 @@ ffmpeg_cmd () {
     esac
     #Change to the directory of the video file
     cd "$(dirname $FILE)"
-
+    echo "Using $FILE."
     echo "Working in $PWD."
 
     #The black magic
@@ -50,7 +50,7 @@ main () {
     local RESOLUTION=0
     local STOP=""
     local CRF="30"
-    if [ -z "$@" ] ; then
+    if [[ -z $* ]] ; then
         c2whelp
         exit 0
     fi
@@ -74,7 +74,7 @@ main () {
 
     local FILE="$1"
     local FILE_OUT=""
-    if [ -z "$FILE_OUT" ] ; then
+    if [[ ! -z $FILE_OUT ]] ; then
         FILE_OUT=$( basename "$FILE" | sed 's/\..*$/\.webm/')
     fi
 
