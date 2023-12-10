@@ -34,13 +34,13 @@ ffmpeg_cmd () {
         2) FFMPEG_RESOLUTION="${FFMPEG_RESOLUTION} -vf scale=-1:1080";;
     esac
     #Change to the directory of the video file
-    cd "$(dirname $FILE)"
+    cd "$(dirname -z $FILE)"
     echo "Using $FILE."
     echo "Working in $PWD."
 
     #The black magic
     ffmpeg -hide_banner -loglevel error $FFMPEG_STARTSTOP -i "$(basename $FILE)" $FFMPEG_RESOLUTION -c:v libvpx-vp9 -b:v 0 -crf $CRF -pass 1 -an -f null /dev/null
-    ffmpeg -hide_banner -loglevel error $FFMPEG_STARTSTOP -i "$(basename $FILE)" $FFMPEG_RESOLUTION -c:v libvpx-vp9 -b:v 0 -crf $CRF -pass 2 -row-mt 1 -quality good -speed 2 -auto-alt-ref 1 -lag-in-frames 25 -cpu-used 4 -aq-mode 0 -tile-columns 4 -tile-rows 0 -enable-tpl 1 -c:a libopus -b:a 64K  -f webm -y "$FILE_OUT"
+    ffmpeg $FFMPEG_STARTSTOP -i "$(basename $FILE)" $FFMPEG_RESOLUTION -c:v libvpx-vp9 -b:v 0 -crf $CRF -pass 2 -row-mt 1 -quality good -speed 2 -auto-alt-ref 1 -lag-in-frames 25 -cpu-used 4 -aq-mode 0 -tile-columns 4 -tile-rows 0 -enable-tpl 1 -c:a libopus -b:a 64K  -f webm -y "'$FILE_OUT'"
     echo -e "\n$FILE_OUT is done, located in $PWD.\nRemoving 'ffmpeg2pass-0.log'."
     rm 'ffmpeg2pass-0.log'
 }
@@ -50,6 +50,7 @@ main () {
     local RESOLUTION=0
     local STOP=""
     local CRF="30"
+    local FILE_OUT=""
     if [[ -z $* ]] ; then
         c2whelp
         exit 0
@@ -73,8 +74,8 @@ main () {
     #Parse Filename, to get PWD and auto append if -o is not set.
 
     local FILE="$1"
-    local FILE_OUT=""
-    if [[ ! -z $FILE_OUT ]] ; then
+
+    if [[ -z $FILE_OUT ]] ; then
         FILE_OUT=$( basename "$FILE" | sed 's/\..*$/\.webm/')
     fi
 
