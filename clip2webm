@@ -40,7 +40,7 @@ ffmpeg_cmd () {
 
     #The black magic
     ffmpeg -hide_banner -loglevel error $FFMPEG_STARTSTOP -i "$(basename $FILE)" $FFMPEG_RESOLUTION -c:v libvpx-vp9 -b:v 0 -crf $CRF -pass 1 -an -f null /dev/null
-    ffmpeg $FFMPEG_STARTSTOP -i "$(basename $FILE)" $FFMPEG_RESOLUTION -c:v libvpx-vp9 -b:v 0 -crf $CRF -pass 2 -row-mt 1 -quality good -speed 2 -auto-alt-ref 1 -lag-in-frames 25 -cpu-used 4 -aq-mode 0 -tile-columns 4 -tile-rows 0 -enable-tpl 1 -c:a libopus -b:a 64K  -f webm -y "'$FILE_OUT'"
+    ffmpeg $FFMPEG_STARTSTOP -i "$(basename $FILE)" $FFMPEG_RESOLUTION -c:v libvpx-vp9 -b:v 0 -crf $CRF -pass 2 -row-mt 1 -quality good -speed 2 -auto-alt-ref 1 -lag-in-frames 25 -cpu-used 4 -aq-mode 0 -tile-columns 4 -tile-rows 0 -enable-tpl 1 -c:a libopus -b:a 64K  -f webm -y "$FILE_OUT"
     echo -e "\n$FILE_OUT is done, located in $PWD.\nRemoving 'ffmpeg2pass-0.log'."
     rm 'ffmpeg2pass-0.log'
 }
